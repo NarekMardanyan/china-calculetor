@@ -113,7 +113,7 @@
         <div class="field"><input id="cnyAmd" type="number" inputmode="decimal" min="0" step="any"><i class="unit">֏</i></div>
       </label>
       <label><span>1 доллар</span>
-        <div class="field"><input id="usdAmd" type="number" inputmode="decimal" min="0" step="any"><i class="unit">֏</i></div>
+        <div class="field"><input id="usdAmd" type="number" value="360" inputmode="decimal" min="0" step="any"><i class="unit">֏</i></div>
       </label>
     </div>
   </section>
@@ -189,7 +189,7 @@
   } catch (e) {}
 
   ids.forEach(id => el(id).addEventListener("input", calc));
-  el("reset").addEventListener("click", () => { ids.forEach(id => el(id).value = ""); calc(); });
+  el("reset").addEventListener("click", () => { ids.forEach(id => el(id).value = el(id).defaultValue); calc(); });
   calc();
 </script>
 </body>
