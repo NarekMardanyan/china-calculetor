@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Калькулятор импорта</title>
+<style>
+  :root {
+    --bg: #f3f5f7;
+    --card: #ffffff;
+    --text: #1a1f24;
+    --muted: #66707a;
+    --border: #d6dbe0;
+    --accent: #0f766e;
+    --good: #15803d;
+    --bad: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111417;
+      --card: #1b2025;
+      --text: #e9edf0;
+      --muted: #97a1aa;
+      --border: #333b42;
+      --accent: #2dd4bf;
+      --good: #4ade80;
+      --bad: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+  main { max-width: 520px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 4px 0 16px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 12px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  label { display: block; margin-bottom: 12px; }
+  label:last-child { margin-bottom: 0; }
+  label span { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+  .field { position: relative; }
+  input {
+    width: 100%;
+    font: inherit;
+    font-size: 18px; /* ≥16px — iOS не зумит при фокусе */
+    padding: 12px 64px 12px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .unit {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 14px; pointer-events: none;
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row label { margin-bottom: 12px; }
+  .res { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .res:last-child { border-bottom: 0; }
+  .res .k { color: var(--muted); }
+  .res .v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .res.big .v { font-size: 20px; }
+  .good { color: var(--good); }
+  .bad { color: var(--bad); }
+  .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  button {
+    width: 100%; font: inherit; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Импорт из Китая → Армения</h1>
+
+  <section class="card">
+    <h2>Товар</h2>
+    <label><span>Цена за штуку</span>
+      <div class="field"><input id="priceCny" type="number" inputmode="decimal" min="0" step="any"><i class="unit">¥</i></div>
+    </label>
+    <label><span>Количество</span>
+      <div class="field"><input id="qty" type="number" inputmode="numeric" min="0" step="1"><i class="unit">шт</i></div>
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>Доставка (карго)</h2>
+    <label><span>Общий объём партии</span>
+      <div class="field"><input id="volume" type="number" inputmode="decimal" min="0" step="any"><i class="unit">м³</i></div>
+    </label>
+    <label><span>Ставка за кубометр</span>
+      <div class="field"><input id="rateCbm" type="number" inputmode="decimal" min="0" step="any"><i class="unit">$/м³</i></div>
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>Курсы</h2>
+    <div class="row">
+      <label><span>1 юань</span>
+        <div class="field"><input id="cnyAmd" type="number" inputmode="decimal" min="0" step="any"><i class="unit">֏</i></div>
+      </label>
+      <label><span>1 доллар</span>
+        <div class="field"><input id="usdAmd" type="number" inputmode="decimal" min="0" step="any"><i class="unit">֏</i></div>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Продажа</h2>
+    <label><span>Моя цена продажи за штуку</span>
+      <div class="field"><input id="sellAmd" type="number" inputmode="decimal" min="0" step="any"><i class="unit">֏</i></div>
+    </label>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <h2>Результат</h2>
+    <div class="res"><span class="k">Товар за всю партию</span><span class="v" id="goodsTotal">—</span></div>
+    <div class="res"><span class="k">Доставка за всю партию</span><span class="v" id="deliveryTotal">—</span></div>
+    <div class="res"><span class="k">Доставка на 1 шт</span><span class="v" id="deliveryUnit">—</span></div>
+    <div class="res big"><span class="k">Себестоимость 1 шт</span><span class="v" id="costUnit">—</span></div>
+    <div class="res"><span class="k">Себестоимость партии</span><span class="v" id="costTotal">—</span></div>
+    <div class="res big"><span class="k">Прибыль с 1 шт</span><span class="v" id="profitUnit">—</span></div>
+    <div class="res big"><span class="k">Прибыль с партии</span><span class="v" id="profitTotal">—</span></div>
+    <div class="res big"><span class="k">Наценка</span><span class="v" id="markup">—</span></div>
+    <p class="hint">Наценка = прибыль ÷ себестоимость × 100%. Введённые значения сохраняются на этом устройстве.</p>
+  </section>
+
+  <button id="reset" type="button">Очистить всё</button>
+</main>
+
+<script>
+  const ids = ["priceCny", "qty", "volume", "rateCbm", "cnyAmd", "usdAmd", "sellAmd"];
+  const el = id => document.getElementById(id);
+  const KEY = "china-calc-v1";
+
+  const fmt = n => Math.round(n).toLocaleString("ru-RU") + " ֏";
+  const num = id => {
+    const v = parseFloat(String(el(id).value).replace(",", "."));
+    return Number.isFinite(v) ? v : NaN;
+  };
+
+  function show(id, text, cls) {
+    const node = el(id);
+    node.textContent = text;
+    node.className = "v" + (cls ? " " + cls : "");
+  }
+
+  function calc() {
+    const v = Object.fromEntries(ids.map(id => [id, num(id)]));
+    try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(ids.map(id => [id, el(id).value])))); } catch (e) {}
+
+    const ok = x => Number.isFinite(x);
+    const goodsTotal = v.priceCny * v.qty * v.cnyAmd;
+    const deliveryTotal = v.volume * v.rateCbm * v.usdAmd;
+    const deliveryUnit = v.qty > 0 ? deliveryTotal / v.qty : NaN;
+    const costUnit = v.priceCny * v.cnyAmd + deliveryUnit;
+    const costTotal = costUnit * v.qty;
+    const profitUnit = v.sellAmd - costUnit;
+    const profitTotal = profitUnit * v.qty;
+    const markup = costUnit > 0 ? profitUnit / costUnit * 100 : NaN;
+
+    show("goodsTotal", ok(goodsTotal) ? fmt(goodsTotal) : "—");
+    show("deliveryTotal", ok(deliveryTotal) ? fmt(deliveryTotal) : "—");
+    show("deliveryUnit", ok(deliveryUnit) ? fmt(deliveryUnit) : "—");
+    show("costUnit", ok(costUnit) ? fmt(costUnit) : "—");
+    show("costTotal", ok(costTotal) ? fmt(costTotal) : "—");
+    const sign = x => x >= 0 ? "good" : "bad";
+    show("profitUnit", ok(profitUnit) ? fmt(profitUnit) : "—", ok(profitUnit) && sign(profitUnit));
+    show("profitTotal", ok(profitTotal) ? fmt(profitTotal) : "—", ok(profitTotal) && sign(profitTotal));
+    show("markup", ok(markup) ? markup.toLocaleString("ru-RU", { maximumFractionDigits: 1 }) + " %" : "—", ok(markup) && sign(markup));
+  }
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+    ids.forEach(id => { if (saved[id] != null) el(id).value = saved[id]; });
+  } catch (e) {}
+
+  ids.forEach(id => el(id).addEventListener("input", calc));
+  el("reset").addEventListener("click", () => { ids.forEach(id => el(id).value = ""); calc(); });
+  calc();
+</script>
+</body>
+</html>
